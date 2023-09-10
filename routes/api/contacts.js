@@ -1,11 +1,11 @@
 const express = require("express");
-const pls = require("../../models/contacts");
 const router = express.Router();
 const Joi = require("joi");
+const service = require("../../service/contacts");
 
 // @ GET /api/contacts
-router.get("/", async (req, res, next) => {
-  const response = await pls.listContacts();
+router.get("/", async (_, res) => {
+  const response = await service.listContacts();
   if (!response) {
     res.status(400).json({
       message: "An error occured on attempt to read the contacts file",
@@ -15,8 +15,8 @@ router.get("/", async (req, res, next) => {
 });
 
 // @ GET /api/contacts/:id
-router.get("/:contactId", async (req, res, next) => {
-  const response = await pls.getContactById(req.params.contactId);
+router.get("/:contactId", async (req, res) => {
+  const response = await service.getContactById(req.params.contactId);
   if (!response) {
     return res
       .status(404)
@@ -27,8 +27,8 @@ router.get("/:contactId", async (req, res, next) => {
 });
 
 // @ DELETE /api/contacts/:id
-router.delete("/:contactId", async (req, res, next) => {
-  const response = await pls.removeContact(req.params.contactId);
+router.delete("/:contactId", async (req, res) => {
+  const response = await service.removeContact(req.params.contactId);
   if (!response) {
     return res.status(404).json({
       message: `Contact with id ${req.params.contactId} has not been found`,
@@ -45,16 +45,17 @@ const postBodyScheme = Joi.object({
 });
 
 // @ POST /api/contacts
-router.post("/", async (req, res, next) => {
+router.post("/", async (req, res) => {
   const validatedBody = postBodyScheme.validate(req.body);
   if (validatedBody.error?.details.length > 0) {
     return res
       .status(400)
       .json({ message: "Your request is not in proper format." });
   }
-  const response = await pls.addContact(req.body);
+  const response = await service.addContact(req.body);
   return res.status(201).json(response);
 });
+
 const putBodyScheme = Joi.object({
   email: Joi.string().email(),
   name: Joi.string(),
@@ -62,7 +63,7 @@ const putBodyScheme = Joi.object({
 });
 
 // @ PUT /api/contacts/:id
-router.put("/:contactId", async (req, res, next) => {
+router.put("/:contactId", async (req, res) => {
   if (Object.keys(req.body).length === 0) {
     return res.status(400).json({ message: "Missing fields" });
   }
@@ -74,8 +75,32 @@ router.put("/:contactId", async (req, res, next) => {
       .json({ message: "Your request is not in proper format." });
   }
 
-  const response = await pls.updateContact(req.params.contactId, req.body);
+  const response = await service.updateContact(req.params.contactId, req.body);
 
+  if (!response) {
+    return res.status(404).json({
+      message: `Contact with id ${req.params.contactId} has not been found`,
+    });
+  } else {
+    return res.status(200).json(response);
+  }
+});
+
+const patchBodyScheme = Joi.object({
+  favorite: Joi.boolean().required(),
+});
+
+// @ PATCH /api/contacts/:contactId
+
+router.patch("/:contactId", async (req, res) => {
+  const validatedBody = patchBodyScheme.validate(req.body);
+  if (validatedBody.error?.details.length > 0) {
+    return res.status(400).json({ message: "missing field favorite" });
+  }
+  const response = await service.updateStatusContact(
+    req.params.contactId,
+    req.body
+  );
   if (!response) {
     return res.status(404).json({
       message: `Contact with id ${req.params.contactId} has not been found`,
