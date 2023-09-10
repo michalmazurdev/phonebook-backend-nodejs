@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const Joi = require("joi");
-const pls = require("../../service/contacts");
+const service = require("../../service/contacts");
 
 // @ GET /api/contacts
 router.get("/", async (_, res) => {
-  const response = await pls.listContacts();
+  const response = await service.listContacts();
   if (!response) {
     res.status(400).json({
       message: "An error occured on attempt to read the contacts file",
@@ -16,7 +16,7 @@ router.get("/", async (_, res) => {
 
 // @ GET /api/contacts/:id
 router.get("/:contactId", async (req, res) => {
-  const response = await pls.getContactById(req.params.contactId);
+  const response = await service.getContactById(req.params.contactId);
   if (!response) {
     return res
       .status(404)
@@ -28,7 +28,7 @@ router.get("/:contactId", async (req, res) => {
 
 // @ DELETE /api/contacts/:id
 router.delete("/:contactId", async (req, res) => {
-  const response = await pls.removeContact(req.params.contactId);
+  const response = await service.removeContact(req.params.contactId);
   if (!response) {
     return res.status(404).json({
       message: `Contact with id ${req.params.contactId} has not been found`,
@@ -52,7 +52,7 @@ router.post("/", async (req, res) => {
       .status(400)
       .json({ message: "Your request is not in proper format." });
   }
-  const response = await pls.addContact(req.body);
+  const response = await service.addContact(req.body);
   return res.status(201).json(response);
 });
 
@@ -75,7 +75,7 @@ router.put("/:contactId", async (req, res) => {
       .json({ message: "Your request is not in proper format." });
   }
 
-  const response = await pls.updateContact(req.params.contactId, req.body);
+  const response = await service.updateContact(req.params.contactId, req.body);
 
   if (!response) {
     return res.status(404).json({
@@ -97,7 +97,7 @@ router.patch("/:contactId", async (req, res) => {
   if (validatedBody.error?.details.length > 0) {
     return res.status(400).json({ message: "missing field favorite" });
   }
-  const response = await pls.updateStatusContact(
+  const response = await service.updateStatusContact(
     req.params.contactId,
     req.body
   );
