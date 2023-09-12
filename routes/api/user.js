@@ -115,4 +115,25 @@ router.get("/", authenticate, (req, res) => {
   return res.status(200).json({ message: "all good" });
 });
 
+router.post("/logout", authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(401).json({
+        status: "error",
+        code: 401,
+        message: "Not authorized",
+      });
+    }
+
+    user.token = null;
+    await user.save();
+
+    return res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 module.exports = router;
