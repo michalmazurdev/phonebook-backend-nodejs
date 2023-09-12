@@ -3,12 +3,14 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
 const User = require("../../service/schemas/userSchema");
-const secret = process.env.JWT_SECRET_KEY;
+const jwtKey = process.env.JWT_SECRET_KEY;
 
 const bodyScheme = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
 });
+
+// @ POST /api/users/signup
 
 router.post("/signup", async (req, res) => {
   const validatedBody = bodyScheme.validate(req.body);
@@ -43,6 +45,8 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// @ POST /api/users/login
+
 router.post("/login", async (req, res) => {
   const validatedBody = bodyScheme.validate(req.body);
   if (validatedBody.error?.details.length > 0) {
@@ -63,10 +67,9 @@ router.post("/login", async (req, res) => {
 
   const payload = {
     id: user.id,
-    username: user.username,
   };
 
-  const token = jwt.sign(payload, secret, { expiresIn: "1h" });
+  const token = jwt.sign(payload, jwtKey, { expiresIn: "1h" });
 
   user.token = token;
   await user.save();
@@ -74,10 +77,42 @@ router.post("/login", async (req, res) => {
   res.json({
     status: "success",
     code: 200,
-    data: {
+    token: {
       token,
     },
+    user: {
+      email: email,
+      subscription: user.subscription,
+    },
   });
+});
+const authenticate = async (req, res, next) => {
+  const token = req.headers.authorization.slice(7);
+  try {
+    if (!token) {
+      throw new Error();
+    }
+    const decodedToken = jwt.verify(token, jwtKey);
+    const user = await User.findById(decodedToken.id);
+    if (!user || user.token !== token) {
+      throw new Error();
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({
+      status: "Unauthorized",
+      code: 401,
+      message: error.message || "Not authorized",
+    });
+  }
+};
+
+// below for tests only
+router.get("/", authenticate, (req, res) => {
+  console.log(req.user);
+
+  return res.status(200).json({ message: "all good" });
 });
 
 module.exports = router;
