@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Joi = require("joi");
-const service = require("../../service/contacts");
+const service = require("../../models/contacts");
 
 // @ GET /api/contacts
 router.get("/", async (_, res) => {
