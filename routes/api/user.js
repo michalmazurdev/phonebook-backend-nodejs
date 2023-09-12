@@ -108,12 +108,7 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-// below for tests only
-router.get("/", authenticate, (req, res) => {
-  console.log(req.user);
-
-  return res.status(200).json({ message: "all good" });
-});
+// @ POST /api/users/logout
 
 router.post("/logout", authenticate, async (req, res) => {
   try {
@@ -132,7 +127,33 @@ router.post("/logout", authenticate, async (req, res) => {
 
     return res.status(204).end();
   } catch (error) {
-    res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// @ GET /api/users/current
+
+router.get("/current", authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(401).json({
+        status: "error",
+        code: 401,
+        message: "Not authorized",
+      });
+    }
+    return res.status(200).json({
+      status: "OK",
+      code: 200,
+      user: {
+        email: user.email,
+        subscription: user.subscription,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
