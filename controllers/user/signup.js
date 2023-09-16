@@ -25,6 +25,7 @@ const signup = async (req, res) => {
   try {
     const newUser = new User({ email });
     newUser.setPassword(password);
+    newUser.setAvatarUrl(email);
     await newUser.save();
     return res.status(201).json({
       status: "success",
