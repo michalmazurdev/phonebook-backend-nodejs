@@ -18,6 +18,13 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
+    if (!user.verify) {
+      return res.status(400).json({
+        message: "User not yet verified",
+        status: "Unauthoirzed",
+        code: 400,
+      });
+    }
     if (!user || !user.validPassword(password)) {
       return res.status(401).json({
         status: "Unauthorized",
