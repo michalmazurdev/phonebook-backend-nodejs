@@ -1,5 +1,6 @@
 const Joi = require("joi");
 const User = require("../../service/schemas/userSchema");
+const { v4: uuidv4 } = require("uuid");
 
 const bodyScheme = Joi.object({
   email: Joi.string().email().required(),
@@ -23,7 +24,7 @@ const signup = async (req, res) => {
     });
   }
   try {
-    const newUser = new User({ email });
+    const newUser = new User({ email, verificationToken: uuidv4() });
     newUser.setPassword(password);
     newUser.setAvatarUrl(email);
     await newUser.save();

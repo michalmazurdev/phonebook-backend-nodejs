@@ -14,36 +14,38 @@ const login = async (req, res) => {
     return res.status(400).json({ message: validatedBody.error.message });
   }
 
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-  if (!user || !user.validPassword(password)) {
-    return res.status(401).json({
-      status: "Unauthorized",
-      code: 400,
-      message: "Email or password is wrong",
-      data: "Bad request",
+    if (!user || !user.validPassword(password)) {
+      return res.status(401).json({
+        status: "Unauthorized",
+        code: 400,
+        message: "Email or password is wrong",
+        data: "Bad request",
+      });
+    }
+
+    const payload = {
+      id: user.id,
+    };
+    const token = jwt.sign(payload, jwtKey, { expiresIn: "1h" });
+    user.token = token;
+    await user.save();
+
+    return res.json({
+      status: "success",
+      code: 200,
+      token,
+      user: {
+        email: email,
+        subscription: user.subscription,
+      },
     });
+  } catch (error) {
+    return res.status(500).json({ message: error });
   }
-
-  const payload = {
-    id: user.id,
-  };
-
-  const token = jwt.sign(payload, jwtKey, { expiresIn: "1h" });
-
-  user.token = token;
-  await user.save();
-
-  res.json({
-    status: "success",
-    code: 200,
-    token,
-    user: {
-      email: email,
-      subscription: user.subscription,
-    },
-  });
 };
 
 module.exports = login;

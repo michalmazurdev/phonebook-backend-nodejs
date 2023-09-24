@@ -15,7 +15,7 @@ const logout = async (req, res) => {
     user.token = null;
     await user.save();
 
-    return res.status(204).end();
+    return res.status(200).json({ message: "logged out" });
   } catch (error) {
     return res.status(500).json({ message: "Internal Server Error" });
   }
