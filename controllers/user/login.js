@@ -21,7 +21,7 @@ const login = async (req, res) => {
     if (!user.verify) {
       return res.status(400).json({
         message: "User not yet verified",
-        status: "Unauthoirzed",
+        status: "Unauthorized",
         code: 400,
       });
     }
