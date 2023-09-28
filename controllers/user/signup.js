@@ -1,5 +1,7 @@
 const Joi = require("joi");
 const User = require("../../service/schemas/userSchema");
+const { v4: uuidv4 } = require("uuid");
+const sendVerifacationEmail = require("../../helpers/sendVerifacationEmail");
 
 const bodyScheme = Joi.object({
   email: Joi.string().email().required(),
@@ -23,10 +25,11 @@ const signup = async (req, res) => {
     });
   }
   try {
-    const newUser = new User({ email });
+    const newUser = new User({ email, verificationToken: uuidv4() });
     newUser.setPassword(password);
     newUser.setAvatarUrl(email);
     await newUser.save();
+    await sendVerifacationEmail(email, newUser.verificationToken);
     return res.status(201).json({
       status: "success",
       code: 201,
@@ -35,7 +38,6 @@ const signup = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
